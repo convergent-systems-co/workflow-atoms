@@ -1,0 +1,47 @@
+---
+import Base from "../../layouts/Base.astro";
+import catalog from "../../../public/exports/catalog.json";
+
+export function getStaticPaths() {
+  return catalog.compositions.map((composition: any) => ({
+    params: { id: composition.id },
+    props: { composition },
+  }));
+}
+
+const { composition } = Astro.props;
+const refs = composition.references ?? {};
+
+type Ref = { ref: string; version: string };
+const sections: Array<{ label: string; values: Ref[] }> = [
+  { label: "Trigger", values: refs.trigger ? [refs.trigger] : [] },
+  { label: "Steps", values: refs.steps ?? [] },
+  { label: "States", values: refs.states ?? [] },
+  { label: "Gates", values: refs.gates ?? [] },
+  { label: "GitHub", values: refs.github ?? [] },
+];
+---
+<Base title={composition.name} description={composition.description}>
+  <p><a href="/workflows/">← All workflows</a></p>
+  <h1>{composition.name}</h1>
+  <p style="color: var(--muted);">
+    <code>workflow</code> · <code>v{composition.version}</code>
+  </p>
+
+  {composition.description && <p>{composition.description}</p>}
+
+  <h2>References</h2>
+  {sections.map(section => section.values.length > 0 && (
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 0.5rem;">{section.label}</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        {section.values.map((r: Ref) => (
+          <code style="background: #f4ece4; padding: 0.25rem 0.75rem; border-radius: 0.25rem;">{r.ref}@{r.version}</code>
+        ))}
+      </div>
+    </div>
+  ))}
+
+  <h2>Raw composition</h2>
+  <p><a href={`/workflows/${composition.id}.json`}>/workflows/{composition.id}.json</a> · <a href="/schemas/composition-v1.json">schema</a></p>
+</Base>

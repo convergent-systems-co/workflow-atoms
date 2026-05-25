@@ -1,0 +1,36 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="How to use" description="How to consume workflow-atoms in your application.">
+  <h1>How to use workflow-atoms</h1>
+
+  <h2>Read the catalog over HTTPS</h2>
+  <p>Every artifact is served under stable URLs with correct content-types:</p>
+  <pre><code>curl https://workflow-atoms.com/exports/catalog.json
+curl https://workflow-atoms.com/atoms/step-type/http-request.json
+curl https://workflow-atoms.com/workflows/ci-build.json
+curl https://workflow-atoms.com/schemas/composition-v1.json</code></pre>
+
+  <h2>Resolve a workflow composition</h2>
+  <p>A workflow composition lists references to atoms by URI and version. To instantiate the workflow,
+  fetch each referenced atom and assemble: trigger → steps → states → gates.</p>
+
+  <pre><code>{`// pseudo-code
+const composition = await fetch("/workflows/ci-build.json").then(r => r.json());
+const refs = composition.references;
+const trigger = await fetch(uriToUrl(refs.trigger.ref)).then(r => r.json());
+const steps = await Promise.all(refs.steps.map(r => fetch(uriToUrl(r.ref)).then(r => r.json())));
+const gates = await Promise.all((refs.gates ?? []).map(r => fetch(uriToUrl(r.ref)).then(r => r.json())));
+const workflow = compileWorkflow({ trigger, steps, gates });
+// run on any conforming engine: n8n, Temporal, GitHub Actions, Airflow…`}</code></pre>
+
+  <h2>Compatibility rules</h2>
+  <p>Rules in <a href="/exports/catalog.json"><code>/exports/catalog.json</code></a> (under the <code>rules</code>
+  key) declare predicates over atoms. Example: a <code>state-transition-validity</code> rule constrains
+  which state transitions are legal. A composition that violates a <code>require</code>-effect rule is malformed.</p>
+
+  <h2>Cross-engine portability</h2>
+  <p>v0.1 ships the catalog and its JSON Schema; compilers to specific workflow engines (n8n, Zapier,
+  GitHub Actions, Temporal, Airflow) are v0.2 work — they translate workflow-atom primitives into
+  the engine's native DSL.</p>
+</Base>
