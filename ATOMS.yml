@@ -1,37 +1,28 @@
 # ATOMS.yml — catalog manifest for workflow-atoms
 #
-# See https://github.com/convergent-systems-co/atoms-spec for the canonical schema this conforms to.
+# Conforms to: https://schema-atoms.com/
+# spec_version: atoms-spec/v1.1.0
 
+spec_version: atoms-spec/v1.1.0
 name: workflow-atoms
 version: 0.1.0
-spec: atoms-spec/v1
-domain: workflow-atoms.com
-ecosystem:
-  federation: xdao.co
-  redirect: workflow.xdao.co
-
-purpose: |
+canonical_domain: workflow-atoms.com
+federation: convergent-systems.co
+description: |
   Workflow primitives unified across n8n, Zapier, GitHub Actions, Temporal, Airflow — step types, triggers, states, and gates composed into typed workflows with no per-tool DSL.
-
-atomTypes:
+atom_types:
   - step-type
   - trigger-type
   - state-type
   - gate-type
   - github
-
-compositionType: workflows
-compositionDir: workflows
-
-ruleTypes:
-  - state-transition-validity
-  - gate-requirement
-  - retry-policy
-
-runtimeConsumers:
+composition_type: workflows
+composition_dir: workflows
+runtime_consumers:
   - olympus
-
-license: Apache-2.0
-maintainers:
-  - name: Convergent Systems
-    contact: maintainers@xdao.co
+lifecycle:
+  current: draft
+licensing:
+  code: Apache-2.0
+steward: convergent-systems-co
+infrastructure_operator: convergent-systems-co
