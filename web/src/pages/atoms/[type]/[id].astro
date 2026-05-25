@@ -1,0 +1,93 @@
+---
+import Base from "../../../layouts/Base.astro";
+import catalog from "../../../../public/exports/catalog.json";
+
+export function getStaticPaths() {
+  return catalog.atoms.map((atom: any) => ({
+    params: { type: atom.type, id: atom.id },
+    props: { atom },
+  }));
+}
+
+const { atom } = Astro.props;
+
+// Pick the type-specific payload
+const stepType = atom.step_type;
+const triggerType = atom.trigger_type;
+const stateType = atom.state_type;
+const gateType = atom.gate_type;
+const github = atom.github;
+---
+<Base title={atom.name} description={atom.description ?? `${atom.type} atom`}>
+  <p><a href="/atoms/">← All atoms</a></p>
+  <h1>{atom.name}</h1>
+  <p style="color: var(--muted);">
+    <code>{atom.type}</code> · <code>v{atom.version}</code>
+  </p>
+
+  {atom.description && <p>{atom.description}</p>}
+
+  {atom.tags && atom.tags.length > 0 && (
+    <p>
+      Tags: {atom.tags.map((tag: string) => (
+        <span style="display: inline-block; font-size: 0.875rem; background: #f4ece4; padding: 0.125rem 0.5rem; border-radius: 0.25rem; margin-right: 0.25rem;">{tag}</span>
+      ))}
+    </p>
+  )}
+
+  {stepType && (
+    <section>
+      <h2>Step type</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {stepType.executor && (<><dt>Executor</dt><dd><code>{stepType.executor}</code></dd></>)}
+        {stepType.retry_policy && (<><dt>Retry policy</dt><dd><code>{stepType.retry_policy}</code></dd></>)}
+        {stepType.timeout && (<><dt>Timeout</dt><dd><code>{stepType.timeout}</code></dd></>)}
+      </dl>
+    </section>
+  )}
+
+  {triggerType && (
+    <section>
+      <h2>Trigger type</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {triggerType.source && (<><dt>Source</dt><dd><code>{triggerType.source}</code></dd></>)}
+        {triggerType.event && (<><dt>Event</dt><dd><code>{triggerType.event}</code></dd></>)}
+        {triggerType.schedule && (<><dt>Schedule</dt><dd><code>{triggerType.schedule}</code></dd></>)}
+      </dl>
+    </section>
+  )}
+
+  {stateType && (
+    <section>
+      <h2>State type</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {stateType.terminal && (<><dt>Terminal</dt><dd>{stateType.terminal ? "yes" : "no"}</dd></>)}
+        {stateType.transitions && stateType.transitions.length > 0 && (<><dt>Transitions</dt><dd>{stateType.transitions.map((t: string) => <code style="margin-right: 0.25rem;">{t}</code>)}</dd></>)}
+      </dl>
+    </section>
+  )}
+
+  {gateType && (
+    <section>
+      <h2>Gate type</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {gateType.condition && (<><dt>Condition</dt><dd><code>{gateType.condition}</code></dd></>)}
+        {gateType.on_fail && (<><dt>On fail</dt><dd><code>{gateType.on_fail}</code></dd></>)}
+      </dl>
+    </section>
+  )}
+
+  {github && (
+    <section>
+      <h2>GitHub</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {github.event && (<><dt>Event</dt><dd><code>{github.event}</code></dd></>)}
+        {github.action && (<><dt>Action</dt><dd><code>{github.action}</code></dd></>)}
+        {github.permissions && (<><dt>Permissions</dt><dd>{Object.entries(github.permissions).map(([k, v]) => <code style="margin-right: 0.25rem;">{k}:{v as string}</code>)}</dd></>)}
+      </dl>
+    </section>
+  )}
+
+  <h2>Raw atom</h2>
+  <p><a href={`/atoms/${atom.type}/${atom.id}.json`}>/atoms/{atom.type}/{atom.id}.json</a> · <a href="/schemas/atom-v1.json">schema</a></p>
+</Base>
