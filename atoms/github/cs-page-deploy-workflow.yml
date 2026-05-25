@@ -1,0 +1,27 @@
+id: "cs-page-deploy-workflow"
+type: "github"
+version: "1.0.0"
+name: "Convergent Systems — Pages Deploy Workflow"
+description: "Reusable GitHub Actions workflow that builds a Node/Astro site and deploys it to Cloudflare Pages."
+subtype: "reusable-workflow"
+canonical_url: "https://workflow-atoms.com/github/reusable/cs-page-deploy-workflow@1.0.0"
+inputs:
+  - name: "site-dir"
+    description: "Path (relative to repo root) of the site directory containing package.json."
+    required: true
+  - name: "project-name"
+    description: "Cloudflare Pages project name."
+    required: true
+  - name: "branch"
+    description: "Branch label for the deploy."
+    required: false
+    default: "main"
+secrets:
+  - name: "CLOUDFLARE_API_TOKEN"
+    required: true
+  - name: "CLOUDFLARE_ACCOUNT_ID"
+    required: true
+provenance:
+  source: "convergent-systems-co ecosystem CI patterns"
+  addedBy: "convergent-systems-co"
+  addedAt: "2026-05-25T00:00:00Z"
