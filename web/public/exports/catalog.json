@@ -1,1 +1,16 @@
-{"version":"0.1.0","atoms":[],"compositions":[],"rules":[]}
+{
+  "version": "0.1.0",
+  "atoms": [
+    {
+      "id": "cs-page-deploy-workflow",
+      "type": "github",
+      "version": "1.0.0",
+      "name": "Convergent Systems — Pages Deploy Workflow",
+      "description": "Reusable GitHub Actions workflow that builds a Node/Astro site and deploys it to Cloudflare Pages.",
+      "subtype": "reusable-workflow",
+      "canonical_url": "https://workflow-atoms.com/github/reusable/cs-page-deploy-workflow@1.0.0"
+    }
+  ],
+  "compositions": [],
+  "rules": []
+}
