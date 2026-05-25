@@ -18,6 +18,7 @@ atomTypes:
   - trigger-type
   - state-type
   - gate-type
+  - github
 
 compositionType: workflows
 compositionDir: workflows
