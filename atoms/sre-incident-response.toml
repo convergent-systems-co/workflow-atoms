@@ -1,0 +1,78 @@
+# atoms/sre-incident-response.toml — SRE workflow atom: incident response
+#
+# Structured incident response workflow for SRE teams.
+# Steps: detect → triage → mitigate → resolve → postmortem
+#
+# Channels: prometheus (detect), kubernetes-api (mitigate/resolve), pagerduty (triage/notify)
+# Conforms to: workflow-atoms catalog spec (atoms-spec/v1.1.0)
+
+id           = "workflow-atoms/workflow/sre-incident-response"
+version      = "1.0.0"
+content_hash = ""
+lifecycle    = "draft"
+created_at   = "2026-05-26T00:00:00Z"
+
+[body]
+name        = "SRE Incident Response"
+description = """
+Five-phase SRE incident response workflow: detect a firing alert via Prometheus,
+page on-call and triage via PagerDuty, apply a mitigation via the Kubernetes API,
+resolve the incident once recovery is confirmed, and produce a postmortem stub
+for follow-up. Requires blast_radius to be declared before mitigation proceeds.
+"""
+
+[body.trigger]
+type   = "alert"
+source = "channel-atoms/channel/prometheus"
+filter = "alert.status == 'firing'"
+
+[[body.steps]]
+id             = "detect"
+name           = "Detect Alert"
+step_type_ref  = "workflow-atoms/step-type/diagnose-incident"
+channel_ref    = "channel-atoms/channel/prometheus"
+inputs         = {time_window_minutes = 15}
+on_failure     = "escalate"
+
+[[body.steps]]
+id             = "triage"
+name           = "Triage and Page On-Call"
+step_type_ref  = "workflow-atoms/step-type/page-on-call"
+channel_ref    = "channel-atoms/channel/pagerduty"
+depends_on     = ["detect"]
+inputs         = {severity = "critical"}
+on_failure     = "retry"
+max_retries    = 3
+
+[[body.steps]]
+id             = "mitigate"
+name           = "Apply Mitigation"
+step_type_ref  = "workflow-atoms/step-type/apply-mitigation"
+channel_ref    = "channel-atoms/channel/kubernetes-api"
+depends_on     = ["triage"]
+requires_field = "blast_radius"
+on_failure     = "escalate"
+
+[[body.steps]]
+id             = "resolve"
+name           = "Resolve Incident"
+step_type_ref  = "workflow-atoms/step-type/trigger-workflow"
+channel_ref    = "channel-atoms/channel/pagerduty"
+depends_on     = ["mitigate"]
+inputs         = {action = "resolve"}
+on_failure     = "retry"
+max_retries    = 2
+
+[[body.steps]]
+id             = "postmortem"
+name           = "Write Postmortem Stub"
+step_type_ref  = "workflow-atoms/step-type/write-post-mortem"
+depends_on     = ["resolve"]
+on_failure     = "continue"
+
+[body.tags]
+tags = ["sre", "incident-response", "detect", "triage", "mitigate", "resolve", "postmortem"]
+
+[meta]
+provenance = "convergent-systems-co/olympus-central#437"
+license    = "Apache-2.0"
