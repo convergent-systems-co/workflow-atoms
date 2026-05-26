@@ -1,7 +1,7 @@
 {
   "catalog": "workflow-atoms",
   "version": "0.1.0",
-  "built_at": "2026-05-26T18:11:27+00:00",
+  "built_at": "2026-05-26T20:22:04+00:00",
   "atoms": [
     {
       "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
@@ -143,6 +143,54 @@
     {
       "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
       "type": "gate-type",
+      "id": "workflow-atoms/gate-type/no-tool-calls-gate",
+      "version": "1.0.0",
+      "name": "No Tool Calls Gate",
+      "description": "Pass when the LLM produced no tool calls in the latest response, signaling that the agentic loop should terminate and the final assistant message should be returned. Fails (blocks) when tool calls are present, indicating another iteration is required.",
+      "inputs": [
+        {
+          "name": "has_tool_calls",
+          "type": "boolean",
+          "required": true,
+          "description": "Output of parse-tool-calls indicating whether tool calls are present"
+        },
+        {
+          "name": "iteration",
+          "type": "integer",
+          "required": false,
+          "description": "Current loop iteration count; used in log output only"
+        },
+        {
+          "name": "max_iterations",
+          "type": "integer",
+          "required": false,
+          "description": "Maximum iterations allowed; gate passes when this is reached regardless of has_tool_calls"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "terminate",
+          "type": "boolean",
+          "description": "True when the loop should stop"
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "description": "One of: no_tool_calls, max_iterations_reached"
+        }
+      ],
+      "retryable": false,
+      "tags": [
+        "gate",
+        "termination",
+        "loop",
+        "olympus",
+        "agentic"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
+      "type": "gate-type",
       "id": "workflow-atoms/gate-type/not-major-bump-gate",
       "version": "1.0.0",
       "name": "Not a Major Version Bump Gate",
@@ -165,6 +213,60 @@
         "gate",
         "dependabot",
         "semver"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
+      "type": "gate-type",
+      "id": "workflow-atoms/gate-type/policy-broker-gate",
+      "version": "1.0.0",
+      "name": "Policy Broker Gate",
+      "description": "Check the pending tool dispatch against the configured policy floor before allowing execution. Blocks any tool call that violates the policy; aborts the loop on violation. Implements the Olympus policy broker pattern.",
+      "inputs": [
+        {
+          "name": "tool_calls",
+          "type": "array",
+          "required": true,
+          "description": "Tool calls proposed by the LLM for this iteration"
+        },
+        {
+          "name": "policy_floor_ref",
+          "type": "string",
+          "required": true,
+          "description": "Reference to the policy atom or config that defines allowed tool operations"
+        },
+        {
+          "name": "persona_ref",
+          "type": "string",
+          "required": false,
+          "description": "Active persona; used to resolve persona-specific policy overrides"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "allowed",
+          "type": "boolean",
+          "description": "True when all proposed tool calls pass the policy floor"
+        },
+        {
+          "name": "blocked_calls",
+          "type": "array",
+          "description": "Any tool calls that were blocked by policy"
+        },
+        {
+          "name": "denial_reason",
+          "type": "string",
+          "description": "Human-readable explanation when allowed is false"
+        }
+      ],
+      "timeout_seconds": 30,
+      "retryable": false,
+      "tags": [
+        "policy",
+        "gate",
+        "safety",
+        "olympus",
+        "agentic"
       ]
     },
     {
@@ -219,6 +321,53 @@
         "gate",
         "test",
         "quality"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
+      "type": "step-type",
+      "id": "workflow-atoms/step-type/append-tool-results",
+      "version": "1.0.0",
+      "name": "Append Tool Results",
+      "description": "Append tool execution results to the running message context so the next LLM invocation receives the full conversation history including all tool outputs so far.",
+      "inputs": [
+        {
+          "name": "context",
+          "type": "array",
+          "required": true,
+          "description": "Current message context array"
+        },
+        {
+          "name": "tool_calls",
+          "type": "array",
+          "required": true,
+          "description": "Tool-call blocks from the previous assistant turn"
+        },
+        {
+          "name": "tool_results",
+          "type": "array",
+          "required": true,
+          "description": "Results from execute-tool-calls, in matching order"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "updated_context",
+          "type": "array",
+          "description": "Message context with the assistant tool-call turn and tool-result turn appended"
+        },
+        {
+          "name": "context_length",
+          "type": "integer",
+          "description": "Number of messages in the updated context"
+        }
+      ],
+      "retryable": false,
+      "tags": [
+        "context",
+        "memory",
+        "olympus",
+        "agentic"
       ]
     },
     {
@@ -505,6 +654,53 @@
         "incident",
         "diagnosis",
         "observability"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
+      "type": "step-type",
+      "id": "workflow-atoms/step-type/execute-tool-calls",
+      "version": "1.0.0",
+      "name": "Execute Tool Calls",
+      "description": "Dispatch each tool call in the list to the ToolExecutor and collect results. Each call is routed to the appropriate registered tool handler; results are returned in the same order as the input calls.",
+      "inputs": [
+        {
+          "name": "tool_calls",
+          "type": "array",
+          "required": true,
+          "description": "Structured tool-call list from parse-tool-calls"
+        },
+        {
+          "name": "tool_executor_ref",
+          "type": "string",
+          "required": false,
+          "description": "Reference to the ToolExecutor instance or config"
+        },
+        {
+          "name": "timeout_seconds",
+          "type": "integer",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tool_results",
+          "type": "array",
+          "description": "Ordered list of tool execution results, one per input call"
+        },
+        {
+          "name": "failed_calls",
+          "type": "array",
+          "description": "Tool calls that errored; empty on full success"
+        }
+      ],
+      "timeout_seconds": 300,
+      "retryable": false,
+      "tags": [
+        "tool-use",
+        "execution",
+        "olympus",
+        "agentic"
       ]
     },
     {
@@ -829,6 +1025,70 @@
     {
       "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
       "type": "step-type",
+      "id": "workflow-atoms/step-type/invoke-llm",
+      "version": "1.0.0",
+      "name": "Invoke LLM",
+      "description": "Send the current message context and available tool schemas to the configured LLM endpoint. Returns the raw model response including any tool-call blocks.",
+      "inputs": [
+        {
+          "name": "context",
+          "type": "array",
+          "required": true,
+          "description": "Ordered list of messages forming the current conversation context"
+        },
+        {
+          "name": "tool_schemas",
+          "type": "array",
+          "required": false,
+          "description": "JSON Schema definitions for tools the model may call"
+        },
+        {
+          "name": "persona_ref",
+          "type": "string",
+          "required": false,
+          "description": "Reference to a persona atom that sets the system prompt"
+        },
+        {
+          "name": "model",
+          "type": "string",
+          "required": false,
+          "description": "Model identifier (e.g. claude-sonnet-4-6)"
+        },
+        {
+          "name": "max_tokens",
+          "type": "integer",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "response",
+          "type": "object",
+          "description": "Raw model response object"
+        },
+        {
+          "name": "tool_calls",
+          "type": "array",
+          "description": "Extracted tool-call blocks from the response (may be empty)"
+        },
+        {
+          "name": "final_message",
+          "type": "string",
+          "description": "Text content of the assistant turn (populated when no tool calls present)"
+        }
+      ],
+      "timeout_seconds": 120,
+      "retryable": true,
+      "tags": [
+        "llm",
+        "ai",
+        "olympus",
+        "agentic"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
+      "type": "step-type",
       "id": "workflow-atoms/step-type/page-on-call",
       "version": "1.0.0",
       "name": "Page On-Call",
@@ -865,6 +1125,53 @@
         "incident",
         "alerting",
         "pagerduty"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
+      "type": "step-type",
+      "id": "workflow-atoms/step-type/parse-tool-calls",
+      "version": "1.0.0",
+      "name": "Parse Tool Calls",
+      "description": "Parse an LLM response object to extract structured tool-call requests. Returns an empty list when the model produced a final answer with no tool calls, signaling loop termination.",
+      "inputs": [
+        {
+          "name": "llm_response",
+          "type": "object",
+          "required": true,
+          "description": "Raw model response from invoke-llm"
+        },
+        {
+          "name": "tool_schemas",
+          "type": "array",
+          "required": false,
+          "description": "Tool schemas used for validation of extracted calls"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tool_calls",
+          "type": "array",
+          "description": "Validated, structured list of tool-call requests"
+        },
+        {
+          "name": "has_tool_calls",
+          "type": "boolean",
+          "description": "True when at least one tool call was found; false signals loop termination"
+        },
+        {
+          "name": "final_text",
+          "type": "string",
+          "description": "Assistant text when has_tool_calls is false"
+        }
+      ],
+      "retryable": false,
+      "tags": [
+        "llm",
+        "parsing",
+        "tool-use",
+        "olympus",
+        "agentic"
       ]
     },
     {
@@ -1613,6 +1920,98 @@
         "incident",
         "ops",
         "reliability"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+      "id": "workflow-atoms/workflows/olympus-agentic-loop",
+      "version": "1.0.0",
+      "name": "Olympus Agentic Toolloop",
+      "description": "The core Olympus agent loop: receive prompt → invoke LLM → parse tool calls → execute → repeat until no tool calls or max iterations reached. Gates a policy broker check before each tool dispatch.",
+      "trigger": {
+        "atom_id": "workflow-atoms/trigger-type/manual",
+        "config": {
+          "inputs": [
+            "user_prompt",
+            "persona_ref",
+            "policy_floor_ref"
+          ]
+        }
+      },
+      "steps": [
+        {
+          "id": "policy-gate",
+          "atom_id": "workflow-atoms/gate-type/policy-broker-gate",
+          "inputs": {
+            "tool_calls": "$ctx.pending_tool_calls",
+            "policy_floor_ref": "$trigger.policy_floor_ref",
+            "persona_ref": "$trigger.persona_ref"
+          },
+          "on_failure": "fail"
+        },
+        {
+          "id": "invoke-llm",
+          "atom_id": "workflow-atoms/step-type/invoke-llm",
+          "depends_on": [
+            "policy-gate"
+          ],
+          "inputs": {
+            "context": "$ctx.message_context",
+            "tool_schemas": "$ctx.tool_schemas",
+            "persona_ref": "$trigger.persona_ref"
+          }
+        },
+        {
+          "id": "parse-tool-calls",
+          "atom_id": "workflow-atoms/step-type/parse-tool-calls",
+          "depends_on": [
+            "invoke-llm"
+          ],
+          "inputs": {
+            "llm_response": "$steps.invoke-llm.response",
+            "tool_schemas": "$ctx.tool_schemas"
+          }
+        },
+        {
+          "id": "execute-tools",
+          "atom_id": "workflow-atoms/step-type/execute-tool-calls",
+          "depends_on": [
+            "parse-tool-calls"
+          ],
+          "inputs": {
+            "tool_calls": "$steps.parse-tool-calls.tool_calls"
+          }
+        },
+        {
+          "id": "append-results",
+          "atom_id": "workflow-atoms/step-type/append-tool-results",
+          "depends_on": [
+            "execute-tools"
+          ],
+          "inputs": {
+            "context": "$ctx.message_context",
+            "tool_calls": "$steps.parse-tool-calls.tool_calls",
+            "tool_results": "$steps.execute-tools.tool_results"
+          }
+        },
+        {
+          "id": "termination-gate",
+          "atom_id": "workflow-atoms/gate-type/no-tool-calls-gate",
+          "depends_on": [
+            "append-results"
+          ],
+          "inputs": {
+            "has_tool_calls": "$steps.parse-tool-calls.has_tool_calls",
+            "max_iterations": 20
+          }
+        }
+      ],
+      "tags": [
+        "olympus",
+        "agentic",
+        "toolloop",
+        "zeus",
+        "llm"
       ]
     },
     {
