@@ -1,0 +1,41 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/ci-validate-build",
+  "version": "1.0.0",
+  "name": "CI Validate and Build",
+  "description": "Standard CI pipeline: check out the repository, install dependencies, run linting/validation, compile the build artifact, and upload it for downstream jobs.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/push",
+    "config": {"branches": ["main", "feat/*"]}
+  },
+  "steps": [
+    {
+      "id": "checkout",
+      "atom_id": "workflow-atoms/step-type/git-checkout",
+      "inputs": {"fetch_depth": 0}
+    },
+    {
+      "id": "install",
+      "atom_id": "workflow-atoms/step-type/install-dependencies",
+      "depends_on": ["checkout"]
+    },
+    {
+      "id": "validate",
+      "atom_id": "workflow-atoms/step-type/run-lint-validate",
+      "depends_on": ["install"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "build",
+      "atom_id": "workflow-atoms/step-type/build-artifact",
+      "depends_on": ["validate"]
+    },
+    {
+      "id": "upload",
+      "atom_id": "workflow-atoms/step-type/upload-artifact",
+      "depends_on": ["build"],
+      "inputs": {"artifact_name": "dist", "retention_days": 7}
+    }
+  ],
+  "tags": ["ci", "build", "validate"]
+}

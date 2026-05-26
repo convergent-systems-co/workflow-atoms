@@ -1,0 +1,42 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/security-scan",
+  "version": "1.0.0",
+  "name": "Security Scan",
+  "description": "Run a secret scan (trufflehog) and a dependency vulnerability audit. Gates block the pipeline if secrets are found or high-severity vulnerabilities are present.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/push",
+    "config": {"branches": ["main", "feat/*"]}
+  },
+  "steps": [
+    {
+      "id": "checkout",
+      "atom_id": "workflow-atoms/step-type/git-checkout"
+    },
+    {
+      "id": "secret-scan",
+      "atom_id": "workflow-atoms/step-type/run-secret-scan",
+      "depends_on": ["checkout"],
+      "inputs": {"scanner": "trufflehog"}
+    },
+    {
+      "id": "no-secrets-gate",
+      "atom_id": "workflow-atoms/gate-type/no-secrets-found-gate",
+      "depends_on": ["secret-scan"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "dep-audit",
+      "atom_id": "workflow-atoms/step-type/run-dependency-audit",
+      "depends_on": ["checkout"],
+      "inputs": {"severity_threshold": "high"}
+    },
+    {
+      "id": "no-high-severity-gate",
+      "atom_id": "workflow-atoms/gate-type/no-high-severity-gate",
+      "depends_on": ["dep-audit"],
+      "on_failure": "fail"
+    }
+  ],
+  "tags": ["security", "scan", "audit", "ci"]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/release-tag",
+  "version": "1.0.0",
+  "name": "Release Tag",
+  "description": "Tag a release: verify the main branch is clean and up to date, create an annotated git tag, then trigger the downstream release workflow.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/manual"
+  },
+  "steps": [
+    {
+      "id": "validate-clean-main",
+      "atom_id": "workflow-atoms/gate-type/clean-main-gate",
+      "inputs": {"branch": "main"},
+      "on_failure": "fail"
+    },
+    {
+      "id": "create-tag",
+      "atom_id": "workflow-atoms/step-type/git-create-tag",
+      "depends_on": ["validate-clean-main"]
+    },
+    {
+      "id": "trigger-release",
+      "atom_id": "workflow-atoms/step-type/trigger-workflow",
+      "depends_on": ["create-tag"],
+      "inputs": {"workflow_id": "release.yml"}
+    }
+  ],
+  "tags": ["release", "git", "tag"]
+}

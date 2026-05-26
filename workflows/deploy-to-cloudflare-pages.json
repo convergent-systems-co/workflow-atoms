@@ -1,0 +1,35 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/deploy-to-cloudflare-pages",
+  "version": "1.0.0",
+  "name": "Deploy to Cloudflare Pages",
+  "description": "Build a Node/Astro site and deploy it to Cloudflare Pages via Wrangler. Requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/push",
+    "config": {"branches": ["main"]}
+  },
+  "steps": [
+    {
+      "id": "checkout",
+      "atom_id": "workflow-atoms/step-type/git-checkout"
+    },
+    {
+      "id": "install",
+      "atom_id": "workflow-atoms/step-type/install-dependencies",
+      "depends_on": ["checkout"]
+    },
+    {
+      "id": "build",
+      "atom_id": "workflow-atoms/step-type/build-artifact",
+      "depends_on": ["install"],
+      "inputs": {"output_path": "dist"}
+    },
+    {
+      "id": "deploy",
+      "atom_id": "workflow-atoms/step-type/cloudflare-pages-deploy",
+      "depends_on": ["build"],
+      "inputs": {"directory": "dist"}
+    }
+  ],
+  "tags": ["deploy", "cloudflare", "pages", "astro"]
+}
