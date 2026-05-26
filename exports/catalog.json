@@ -1,11 +1,50 @@
 {
   "catalog": "workflow-atoms",
   "version": "0.1.0",
-  "generated_at": "2026-05-26T00:00:00Z",
-  "spec_version": "atoms-spec/v1.1.0",
-  "canonical_domain": "workflow-atoms.com",
-  "atom_types": ["step-type", "trigger-type", "state-type", "gate-type", "github"],
+  "built_at": "2026-05-26T15:50:01+00:00",
   "atoms": [
+    {
+      "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
+      "type": "gate-type",
+      "id": "workflow-atoms/gate-type/ci-green",
+      "version": "1.0.0",
+      "name": "CI Green Gate",
+      "description": "Wait for all required CI checks to pass before proceeding. Blocks any action that requires green CI (merges, deploys, releases).",
+      "inputs": [
+        {
+          "name": "pr_number",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "required_checks",
+          "type": "array",
+          "required": false
+        },
+        {
+          "name": "timeout_minutes",
+          "type": "integer",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "all_passed",
+          "type": "boolean"
+        },
+        {
+          "name": "failed_checks",
+          "type": "array"
+        }
+      ],
+      "timeout_seconds": 1800,
+      "retryable": true,
+      "tags": [
+        "ci",
+        "gate",
+        "quality"
+      ]
+    },
     {
       "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
       "type": "step-type",
@@ -14,15 +53,34 @@
       "name": "Git Push",
       "description": "Push a local branch to a remote repository. Prerequisite for PR creation.",
       "inputs": [
-        {"name": "branch", "type": "string", "required": true},
-        {"name": "remote", "type": "string", "required": false},
-        {"name": "force_with_lease", "type": "boolean", "required": false}
+        {
+          "name": "branch",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "remote",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "force_with_lease",
+          "type": "boolean",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "sha", "type": "string"}
+        {
+          "name": "sha",
+          "type": "string"
+        }
       ],
       "retryable": true,
-      "tags": ["git", "vcs", "push"]
+      "tags": [
+        "git",
+        "vcs",
+        "push"
+      ]
     },
     {
       "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
@@ -32,54 +90,45 @@
       "name": "GitHub PR Create",
       "description": "Create a GitHub pull request from a feature branch to a target branch. Requires push access to the repository.",
       "inputs": [
-        {"name": "head_branch", "type": "string", "required": true},
-        {"name": "base_branch", "type": "string", "required": true},
-        {"name": "title", "type": "string", "required": true},
-        {"name": "body", "type": "string", "required": false}
+        {
+          "name": "head_branch",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "base_branch",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "pr_number", "type": "integer"},
-        {"name": "pr_url", "type": "string"}
+        {
+          "name": "pr_number",
+          "type": "integer"
+        },
+        {
+          "name": "pr_url",
+          "type": "string"
+        }
       ],
       "retryable": false,
-      "tags": ["github", "pr", "review"]
-    },
-    {
-      "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
-      "type": "gate-type",
-      "id": "workflow-atoms/gate-type/ci-green",
-      "version": "1.0.0",
-      "name": "CI Green Gate",
-      "description": "Wait for all required CI checks to pass before proceeding. Blocks any action that requires green CI (merges, deploys, releases).",
-      "inputs": [
-        {"name": "pr_number", "type": "integer", "required": true},
-        {"name": "required_checks", "type": "array", "required": false},
-        {"name": "timeout_minutes", "type": "integer", "required": false}
-      ],
-      "outputs": [
-        {"name": "all_passed", "type": "boolean"},
-        {"name": "failed_checks", "type": "array"}
-      ],
-      "timeout_seconds": 1800,
-      "retryable": true,
-      "tags": ["ci", "gate", "quality"]
-    },
-    {
-      "type": "github",
-      "id": "cs-page-deploy-workflow",
-      "version": "1.0.0",
-      "name": "Convergent Systems — Pages Deploy Workflow",
-      "description": "Reusable GitHub Actions workflow that builds a Node/Astro site and deploys it to Cloudflare Pages.",
-      "subtype": "reusable-workflow",
-      "canonical_url": "https://workflow-atoms.com/github/reusable/cs-page-deploy-workflow@1.0.0"
+      "tags": [
+        "github",
+        "pr",
+        "review"
+      ]
     }
   ],
-  "counts": {
-    "total": 4,
-    "by_type": {
-      "step-type": 2,
-      "gate-type": 1,
-      "github": 1
-    }
-  }
+  "compositions": [],
+  "rules": []
 }
