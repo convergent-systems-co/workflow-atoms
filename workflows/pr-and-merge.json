@@ -1,0 +1,37 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/pr-and-merge",
+  "version": "1.0.0",
+  "name": "PR and Merge",
+  "description": "Standard delivery cycle: push the feature branch, open a pull request, wait for CI to go green, then merge. Implements the full worktree+branch → push → PR → CI → merge lifecycle.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/manual"
+  },
+  "steps": [
+    {
+      "id": "push-branch",
+      "atom_id": "workflow-atoms/step-type/git-push",
+      "inputs": {"remote": "origin"}
+    },
+    {
+      "id": "create-pr",
+      "atom_id": "workflow-atoms/step-type/github-pr-create",
+      "depends_on": ["push-branch"],
+      "inputs": {"base_branch": "main"}
+    },
+    {
+      "id": "wait-for-ci",
+      "atom_id": "workflow-atoms/gate-type/ci-green",
+      "depends_on": ["create-pr"],
+      "inputs": {"timeout_minutes": 30},
+      "on_failure": "fail"
+    },
+    {
+      "id": "merge-pr",
+      "atom_id": "workflow-atoms/step-type/github-pr-merge",
+      "depends_on": ["wait-for-ci"],
+      "inputs": {"merge_method": "merge", "delete_branch": true}
+    }
+  ],
+  "tags": ["git", "github", "pr", "delivery"]
+}

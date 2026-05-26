@@ -1,0 +1,38 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/onboarding",
+  "version": "1.0.0",
+  "name": "Developer Onboarding",
+  "description": "New developer onboarding workflow: clone all project repositories, install dependencies, run the test suite to verify the environment, and provision development secrets.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/manual"
+  },
+  "steps": [
+    {
+      "id": "clone-repos",
+      "atom_id": "workflow-atoms/step-type/clone-repository"
+    },
+    {
+      "id": "install-deps",
+      "atom_id": "workflow-atoms/step-type/install-dependencies",
+      "depends_on": ["clone-repos"]
+    },
+    {
+      "id": "run-tests",
+      "atom_id": "workflow-atoms/step-type/run-tests",
+      "depends_on": ["install-deps"]
+    },
+    {
+      "id": "tests-pass-gate",
+      "atom_id": "workflow-atoms/gate-type/tests-pass-gate",
+      "depends_on": ["run-tests"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "setup-secrets",
+      "atom_id": "workflow-atoms/step-type/setup-secrets",
+      "depends_on": ["tests-pass-gate"]
+    }
+  ],
+  "tags": ["onboarding", "developer", "setup"]
+}

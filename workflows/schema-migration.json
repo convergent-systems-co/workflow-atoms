@@ -1,0 +1,39 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/schema-migration",
+  "version": "1.0.0",
+  "name": "Atom Schema Migration",
+  "description": "Migrate atoms to a new schema version: audit existing atoms, validate them against the new schema, fix non-conforming atoms, and regenerate the catalog export.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/manual"
+  },
+  "steps": [
+    {
+      "id": "audit",
+      "atom_id": "workflow-atoms/step-type/audit-atoms"
+    },
+    {
+      "id": "validate",
+      "atom_id": "workflow-atoms/step-type/validate-schema",
+      "depends_on": ["audit"]
+    },
+    {
+      "id": "fix-nonconforming",
+      "atom_id": "workflow-atoms/step-type/fix-nonconforming",
+      "depends_on": ["validate"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "schema-valid-gate",
+      "atom_id": "workflow-atoms/gate-type/schema-valid-gate",
+      "depends_on": ["fix-nonconforming"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "regenerate",
+      "atom_id": "workflow-atoms/step-type/regenerate-exports",
+      "depends_on": ["schema-valid-gate"]
+    }
+  ],
+  "tags": ["schema", "migration", "atoms", "catalog"]
+}

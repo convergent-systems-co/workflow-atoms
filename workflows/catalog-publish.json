@@ -1,0 +1,50 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/catalog-publish",
+  "version": "1.0.0",
+  "name": "Catalog Publish",
+  "description": "Publish the atoms catalog: validate all atoms, build and sign the export artifact, push a release tag, and deploy the catalog website.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/push",
+    "config": {"branches": ["main"]}
+  },
+  "steps": [
+    {
+      "id": "checkout",
+      "atom_id": "workflow-atoms/step-type/git-checkout"
+    },
+    {
+      "id": "validate",
+      "atom_id": "workflow-atoms/step-type/validate-schema",
+      "depends_on": ["checkout"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "schema-valid-gate",
+      "atom_id": "workflow-atoms/gate-type/schema-valid-gate",
+      "depends_on": ["validate"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "build-exports",
+      "atom_id": "workflow-atoms/step-type/regenerate-exports",
+      "depends_on": ["schema-valid-gate"]
+    },
+    {
+      "id": "sign",
+      "atom_id": "workflow-atoms/step-type/sign-artifact",
+      "depends_on": ["build-exports"]
+    },
+    {
+      "id": "push-tag",
+      "atom_id": "workflow-atoms/step-type/git-create-tag",
+      "depends_on": ["sign"]
+    },
+    {
+      "id": "deploy-site",
+      "atom_id": "workflow-atoms/step-type/deploy-catalog-site",
+      "depends_on": ["push-tag"]
+    }
+  ],
+  "tags": ["catalog", "publish", "release", "deploy"]
+}

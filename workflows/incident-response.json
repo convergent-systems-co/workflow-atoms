@@ -1,0 +1,35 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/incident-response",
+  "version": "1.0.0",
+  "name": "Incident Response",
+  "description": "Structured incident response workflow: detect and alert on-call, collect a diagnostic snapshot, apply a mitigation action, and produce a post-mortem document.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/manual"
+  },
+  "steps": [
+    {
+      "id": "page-oncall",
+      "atom_id": "workflow-atoms/step-type/page-on-call",
+      "inputs": {"severity": "critical"}
+    },
+    {
+      "id": "diagnose",
+      "atom_id": "workflow-atoms/step-type/diagnose-incident",
+      "depends_on": ["page-oncall"],
+      "inputs": {"time_window_minutes": 60}
+    },
+    {
+      "id": "mitigate",
+      "atom_id": "workflow-atoms/step-type/apply-mitigation",
+      "depends_on": ["diagnose"],
+      "on_failure": "retry"
+    },
+    {
+      "id": "post-mortem",
+      "atom_id": "workflow-atoms/step-type/write-post-mortem",
+      "depends_on": ["mitigate"]
+    }
+  ],
+  "tags": ["incident", "ops", "reliability"]
+}

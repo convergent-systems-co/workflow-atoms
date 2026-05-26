@@ -1,0 +1,52 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/dependabot-review",
+  "version": "1.0.0",
+  "name": "Dependabot Review and Merge",
+  "description": "Automatically review and merge Dependabot pull requests: filter out major version bumps for manual review, run the test suite, and merge if tests pass.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/push",
+    "config": {"branches": ["dependabot/*"]}
+  },
+  "steps": [
+    {
+      "id": "checkout",
+      "atom_id": "workflow-atoms/step-type/git-checkout"
+    },
+    {
+      "id": "filter-major",
+      "atom_id": "workflow-atoms/step-type/filter-major-bumps",
+      "depends_on": ["checkout"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "not-major-gate",
+      "atom_id": "workflow-atoms/gate-type/not-major-bump-gate",
+      "depends_on": ["filter-major"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "install",
+      "atom_id": "workflow-atoms/step-type/install-dependencies",
+      "depends_on": ["not-major-gate"]
+    },
+    {
+      "id": "test",
+      "atom_id": "workflow-atoms/step-type/run-tests",
+      "depends_on": ["install"]
+    },
+    {
+      "id": "tests-pass-gate",
+      "atom_id": "workflow-atoms/gate-type/tests-pass-gate",
+      "depends_on": ["test"],
+      "on_failure": "fail"
+    },
+    {
+      "id": "merge",
+      "atom_id": "workflow-atoms/step-type/github-pr-merge",
+      "depends_on": ["tests-pass-gate"],
+      "inputs": {"merge_method": "merge", "delete_branch": true}
+    }
+  ],
+  "tags": ["dependabot", "automation", "merge"]
+}
