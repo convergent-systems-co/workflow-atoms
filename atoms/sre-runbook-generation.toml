@@ -1,0 +1,66 @@
+# atoms/sre-runbook-generation.toml — SRE workflow atom: runbook generation
+#
+# Workflow for generating a structured runbook from a postmortem or incident record.
+# Steps: extract → generate → review → publish
+#
+# Conforms to: workflow-atoms catalog spec (atoms-spec/v1.1.0)
+
+id           = "workflow-atoms/workflow/sre-runbook-generation"
+version      = "1.0.0"
+content_hash = ""
+lifecycle    = "draft"
+created_at   = "2026-05-26T00:00:00Z"
+
+[body]
+name        = "SRE Runbook Generation"
+description = """
+Four-phase runbook generation workflow for SRE teams: extract reproducible
+steps from an incident postmortem, generate a structured runbook document,
+gate on operator review, then publish the runbook to the team knowledge base.
+Produces step-by-step remediation documentation with failure-mode coverage
+and on-call audience awareness.
+"""
+
+[body.trigger]
+type   = "manual"
+source = "operator"
+
+[[body.steps]]
+id             = "extract"
+name           = "Extract Steps from Postmortem"
+step_type_ref  = "workflow-atoms/step-type/audit-atoms"
+inputs         = {source_type = "postmortem", output_format = "step-list"}
+on_failure     = "stop"
+
+[[body.steps]]
+id             = "generate"
+name           = "Generate Runbook Document"
+step_type_ref  = "workflow-atoms/step-type/build-artifact"
+depends_on     = ["extract"]
+inputs         = {artifact_type = "runbook", format = "markdown"}
+on_failure     = "stop"
+
+[[body.steps]]
+id             = "review"
+name           = "Operator Review Gate"
+step_type_ref  = "workflow-atoms/step-type/validate-schema"
+depends_on     = ["generate"]
+inputs         = {schema = "runbook-v1", reviewer = "operator"}
+gate           = "human-approval"
+on_failure     = "stop"
+
+[[body.steps]]
+id             = "publish"
+name           = "Publish Runbook"
+step_type_ref  = "workflow-atoms/step-type/deploy-catalog-site"
+depends_on     = ["review"]
+inputs         = {destination = "knowledge-base", visibility = "team"}
+on_failure     = "retry"
+max_retries    = 2
+
+[body.tags]
+tags = ["sre", "runbook", "documentation", "postmortem", "knowledge-base"]
+
+[meta]
+provenance = "convergent-systems-co/olympus-central#437"
+license    = "Apache-2.0"
