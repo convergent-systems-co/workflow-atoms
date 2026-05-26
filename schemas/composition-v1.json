@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "title": "workflow-atoms v1 composition",
+  "description": "A typed workflow composition that references atoms by ID and declares the sequenced steps, triggers, gates, and states that together form a complete workflow.",
+  "type": "object",
+  "required": ["schema", "id", "version", "name", "steps"],
+  "properties": {
+    "schema": {"type": "string"},
+    "id": {"type": "string", "pattern": "^[a-z0-9/-]+$"},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "name": {"type": "string"},
+    "description": {"type": "string"},
+    "trigger": {
+      "type": "object",
+      "description": "The trigger-type atom that initiates this workflow.",
+      "required": ["atom_id"],
+      "properties": {
+        "atom_id": {"type": "string"},
+        "config": {"type": "object"}
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Ordered list of step-type or gate-type atoms in execution sequence.",
+      "items": {
+        "type": "object",
+        "required": ["id", "atom_id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Step instance ID — unique within this composition."
+          },
+          "atom_id": {
+            "type": "string",
+            "description": "Reference to an atom by its id field."
+          },
+          "inputs": {"type": "object"},
+          "depends_on": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Step instance IDs that must complete before this step runs."
+          },
+          "on_failure": {
+            "type": "string",
+            "enum": ["fail", "skip", "retry"],
+            "default": "fail"
+          }
+        }
+      }
+    },
+    "states": {
+      "type": "array",
+      "description": "State-type atoms that track workflow lifecycle.",
+      "items": {
+        "type": "object",
+        "required": ["atom_id"],
+        "properties": {
+          "atom_id": {"type": "string"},
+          "transitions": {"type": "object"}
+        }
+      }
+    },
+    "tags": {"type": "array", "items": {"type": "string"}}
+  }
+}
