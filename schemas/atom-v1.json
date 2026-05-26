@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-atoms.com/schemas/atom-v1.json",
+  "title": "workflow-atoms v1 atom",
+  "type": "object",
+  "required": ["schema", "type", "id", "version", "name"],
+  "properties": {
+    "schema": {"type": "string"},
+    "type": {
+      "type": "string",
+      "enum": ["step-type", "trigger-type", "state-type", "gate-type", "github"]
+    },
+    "id": {"type": "string", "pattern": "^[a-z0-9/-]+$"},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "name": {"type": "string"},
+    "description": {"type": "string"},
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string"},
+          "required": {"type": "boolean"}
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string"}
+        }
+      }
+    },
+    "timeout_seconds": {"type": "integer"},
+    "retryable": {"type": "boolean"},
+    "tags": {"type": "array", "items": {"type": "string"}}
+  }
+}
