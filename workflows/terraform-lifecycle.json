@@ -1,0 +1,34 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/terraform-lifecycle",
+  "version": "1.0.0",
+  "name": "Terraform Infrastructure Lifecycle",
+  "description": "Full Terraform lifecycle for *-atoms catalog infrastructure: plan on PR → apply on approval → optional destroy. Uses R2 state backend, Cloudflare DNS token, and OpenTofu CLI.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/manual",
+    "config": {"inputs": ["environment", "action"]}
+  },
+  "steps": [
+    {
+      "id": "tf-plan",
+      "atom_id": "pipeline-atoms/github/tf-plan",
+      "on_failure": "fail"
+    },
+    {
+      "id": "review-gate",
+      "atom_id": "workflow-atoms/gate-type/ci-green",
+      "depends_on": ["tf-plan"]
+    },
+    {
+      "id": "tf-apply",
+      "atom_id": "pipeline-atoms/github/terraform-apply",
+      "depends_on": ["review-gate"]
+    },
+    {
+      "id": "verify",
+      "atom_id": "workflow-atoms/step-type/verify-infrastructure",
+      "depends_on": ["tf-apply"]
+    }
+  ],
+  "tags": ["terraform", "infra", "lifecycle", "cloudflare", "atoms-fleet"]
+}

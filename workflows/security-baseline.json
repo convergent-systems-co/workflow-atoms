@@ -1,0 +1,18 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/security-baseline",
+  "version": "1.0.0",
+  "name": "Security Scanning Baseline",
+  "description": "Minimum security checks for every *-atoms catalog site: secret detection with TruffleHog on every push and PR.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/push",
+    "config": {}
+  },
+  "steps": [
+    {
+      "id": "secret-scan",
+      "atom_id": "pipeline-atoms/github/secret-scan"
+    }
+  ],
+  "tags": ["security", "secrets", "trufflehog", "baseline", "atoms-fleet"]
+}
