@@ -1,0 +1,33 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/repo-governance",
+  "version": "1.0.0",
+  "name": "Repository Governance",
+  "description": "Automated governance for every *-atoms repo: one-shot bootstrap on first push, weekly label sync from repo-standards, automatic issue triage via copilot+rest agent.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/schedule",
+    "config": {}
+  },
+  "steps": [
+    {
+      "id": "bootstrap",
+      "atom_id": "pipeline-atoms/github/bootstrap"
+    },
+    {
+      "id": "label-sync",
+      "atom_id": "pipeline-atoms/github/label-sync",
+      "depends_on": ["bootstrap"]
+    },
+    {
+      "id": "label-cleanup",
+      "atom_id": "pipeline-atoms/github/label-cleanup",
+      "depends_on": ["label-sync"]
+    },
+    {
+      "id": "triage",
+      "atom_id": "pipeline-atoms/github/triage",
+      "depends_on": ["label-cleanup"]
+    }
+  ],
+  "tags": ["governance", "labels", "triage", "automation", "atoms-fleet"]
+}

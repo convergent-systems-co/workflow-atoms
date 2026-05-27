@@ -1,0 +1,35 @@
+{
+  "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+  "id": "workflow-atoms/workflows/atoms-catalog-cicd",
+  "version": "1.0.0",
+  "name": "Atoms Catalog CI/CD",
+  "description": "Standard CI/CD pipeline for every *-atoms.com catalog site: type-check and build on PR, deploy to Cloudflare Pages on merge to main, create tagged release for semver tags.",
+  "trigger": {
+    "atom_id": "workflow-atoms/trigger-type/push",
+    "config": {"inputs": ["branch", "tag"]}
+  },
+  "steps": [
+    {
+      "id": "secret-scan",
+      "atom_id": "pipeline-atoms/github/secret-scan"
+    },
+    {
+      "id": "ci",
+      "atom_id": "pipeline-atoms/github/ci",
+      "depends_on": ["secret-scan"]
+    },
+    {
+      "id": "deploy",
+      "atom_id": "pipeline-atoms/github/deploy",
+      "depends_on": ["ci"],
+      "inputs": {"condition": "push to main"}
+    },
+    {
+      "id": "release",
+      "atom_id": "pipeline-atoms/github/release",
+      "depends_on": ["deploy"],
+      "inputs": {"condition": "semver tag push"}
+    }
+  ],
+  "tags": ["ci-cd", "atoms-fleet", "cloudflare-pages", "astro"]
+}

@@ -1,7 +1,7 @@
 {
   "catalog": "workflow-atoms",
   "version": "0.1.0",
-  "built_at": "2026-05-27T17:53:44+00:00",
+  "built_at": "2026-05-27T19:35:37+00:00",
   "atoms": [
     {
       "schema": "https://workflow-atoms.com/schemas/atom-v1.json",
@@ -1612,6 +1612,61 @@
   "compositions": [
     {
       "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+      "id": "workflow-atoms/workflows/atoms-catalog-cicd",
+      "version": "1.0.0",
+      "name": "Atoms Catalog CI/CD",
+      "description": "Standard CI/CD pipeline for every *-atoms.com catalog site: type-check and build on PR, deploy to Cloudflare Pages on merge to main, create tagged release for semver tags.",
+      "trigger": {
+        "atom_id": "workflow-atoms/trigger-type/push",
+        "config": {
+          "inputs": [
+            "branch",
+            "tag"
+          ]
+        }
+      },
+      "steps": [
+        {
+          "id": "secret-scan",
+          "atom_id": "pipeline-atoms/github/secret-scan"
+        },
+        {
+          "id": "ci",
+          "atom_id": "pipeline-atoms/github/ci",
+          "depends_on": [
+            "secret-scan"
+          ]
+        },
+        {
+          "id": "deploy",
+          "atom_id": "pipeline-atoms/github/deploy",
+          "depends_on": [
+            "ci"
+          ],
+          "inputs": {
+            "condition": "push to main"
+          }
+        },
+        {
+          "id": "release",
+          "atom_id": "pipeline-atoms/github/release",
+          "depends_on": [
+            "deploy"
+          ],
+          "inputs": {
+            "condition": "semver tag push"
+          }
+        }
+      ],
+      "tags": [
+        "ci-cd",
+        "atoms-fleet",
+        "cloudflare-pages",
+        "astro"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
       "id": "workflow-atoms/workflows/catalog-publish",
       "version": "1.0.0",
       "name": "Catalog Publish",
@@ -2258,6 +2313,51 @@
     },
     {
       "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+      "id": "workflow-atoms/workflows/repo-governance",
+      "version": "1.0.0",
+      "name": "Repository Governance",
+      "description": "Automated governance for every *-atoms repo: one-shot bootstrap on first push, weekly label sync from repo-standards, automatic issue triage via copilot+rest agent.",
+      "trigger": {
+        "atom_id": "workflow-atoms/trigger-type/schedule",
+        "config": {}
+      },
+      "steps": [
+        {
+          "id": "bootstrap",
+          "atom_id": "pipeline-atoms/github/bootstrap"
+        },
+        {
+          "id": "label-sync",
+          "atom_id": "pipeline-atoms/github/label-sync",
+          "depends_on": [
+            "bootstrap"
+          ]
+        },
+        {
+          "id": "label-cleanup",
+          "atom_id": "pipeline-atoms/github/label-cleanup",
+          "depends_on": [
+            "label-sync"
+          ]
+        },
+        {
+          "id": "triage",
+          "atom_id": "pipeline-atoms/github/triage",
+          "depends_on": [
+            "label-cleanup"
+          ]
+        }
+      ],
+      "tags": [
+        "governance",
+        "labels",
+        "triage",
+        "automation",
+        "atoms-fleet"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
       "id": "workflow-atoms/workflows/schema-migration",
       "version": "1.0.0",
       "name": "Atom Schema Migration",
@@ -2306,6 +2406,30 @@
         "migration",
         "atoms",
         "catalog"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+      "id": "workflow-atoms/workflows/security-baseline",
+      "version": "1.0.0",
+      "name": "Security Scanning Baseline",
+      "description": "Minimum security checks for every *-atoms catalog site: secret detection with TruffleHog on every push and PR.",
+      "trigger": {
+        "atom_id": "workflow-atoms/trigger-type/push",
+        "config": {}
+      },
+      "steps": [
+        {
+          "id": "secret-scan",
+          "atom_id": "pipeline-atoms/github/secret-scan"
+        }
+      ],
+      "tags": [
+        "security",
+        "secrets",
+        "trufflehog",
+        "baseline",
+        "atoms-fleet"
       ]
     },
     {
@@ -2529,6 +2653,57 @@
         "runbook",
         "documentation",
         "olympus"
+      ]
+    },
+    {
+      "schema": "https://workflow-atoms.com/schemas/composition-v1.json",
+      "id": "workflow-atoms/workflows/terraform-lifecycle",
+      "version": "1.0.0",
+      "name": "Terraform Infrastructure Lifecycle",
+      "description": "Full Terraform lifecycle for *-atoms catalog infrastructure: plan on PR → apply on approval → optional destroy. Uses R2 state backend, Cloudflare DNS token, and OpenTofu CLI.",
+      "trigger": {
+        "atom_id": "workflow-atoms/trigger-type/manual",
+        "config": {
+          "inputs": [
+            "environment",
+            "action"
+          ]
+        }
+      },
+      "steps": [
+        {
+          "id": "tf-plan",
+          "atom_id": "pipeline-atoms/github/tf-plan",
+          "on_failure": "fail"
+        },
+        {
+          "id": "review-gate",
+          "atom_id": "workflow-atoms/gate-type/ci-green",
+          "depends_on": [
+            "tf-plan"
+          ]
+        },
+        {
+          "id": "tf-apply",
+          "atom_id": "pipeline-atoms/github/terraform-apply",
+          "depends_on": [
+            "review-gate"
+          ]
+        },
+        {
+          "id": "verify",
+          "atom_id": "workflow-atoms/step-type/verify-infrastructure",
+          "depends_on": [
+            "tf-apply"
+          ]
+        }
+      ],
+      "tags": [
+        "terraform",
+        "infra",
+        "lifecycle",
+        "cloudflare",
+        "atoms-fleet"
       ]
     }
   ],
